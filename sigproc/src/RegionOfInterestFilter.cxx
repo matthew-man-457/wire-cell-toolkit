@@ -131,8 +131,16 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
             float central_value = charges[bin]- median;
             log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
-
-            newcharge.at(bin) = central_value;
+	    
+	    if(central_value<-15 or central_value>15)
+	    {
+		for(int delta = -30; delta < 31; ++delta)
+		{
+		    int newbin = bin+delta;
+		    if(newbin>-1 and newbin<(int)charges.size())
+			newcharge.at(newbin) = charges[newbin]- median;
+		}
+	    }
 
         }
 
