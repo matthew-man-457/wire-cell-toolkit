@@ -79,7 +79,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     auto traces = inframe->traces();
     auto trace_tags = inframe->trace_tags();
 
-    log->debug("RegionOfInterestFilter: numero tags {}", trace_tags->size());
+    log->debug("RegionOfInterestFilter: numero tags {}", trace_tags.size());
 
     for (auto ttag : trace_tags)
         log->debug("RegionOfInterestFilter: tag {}", ttag);
@@ -149,10 +149,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         roi_traces.push_back(roi_trace_index);
         newtraces->push_back(ITrace::pointer(tracetemp));
         const size_t old_trace_index = newtraces->size();
-        old_traces.push_back(old_trace_index)
+        old_traces.push_back(old_trace_index);
         newtraces->push_back(ITrace::pointer(trace));
-        trace
-
     }
 
 

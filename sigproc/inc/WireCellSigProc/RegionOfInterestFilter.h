@@ -34,7 +34,7 @@ namespace WireCell {
 	    typedef std::vector< std::vector<int> > grouped_channels_t;
 
 	    /// Create an RegionOfInterestFilter.
-	    RegionOfInterestFilter(const std::string& roi_tag = "roi");
+	    RegionOfInterestFilter(const std::string& roi_tag = "roi", const std::string& old_tag = "raw");
 	    virtual ~RegionOfInterestFilter();
 
 	    /// IFrameFilter interface.
