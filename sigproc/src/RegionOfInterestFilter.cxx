@@ -21,8 +21,9 @@ using namespace WireCell;
 
 using namespace WireCell::SigProc;
 
-RegionOfInterestFilter::RegionOfInterestFilter(const std::string& roi_tag)
+RegionOfInterestFilter::RegionOfInterestFilter(const std::string& roi_tag, const std::string& old_tag)
 : m_roi_tag(roi_tag)
+, m_old_tag(old_tag)
 , m_frame_tag("sigproc")
 , log(Log::logger("sigproc"))
 {
@@ -34,6 +35,7 @@ RegionOfInterestFilter::~RegionOfInterestFilter()
 void RegionOfInterestFilter::configure(const WireCell::Configuration& cfg)
 {
   m_roi_tag = get(cfg,"roi_tag",m_roi_tag);   
+  m_old_tag = get(cfg,"old_tag",m_old_tag);   
   m_frame_tag = get(cfg,"frame_tag",m_frame_tag); 
 }
 
@@ -41,6 +43,7 @@ WireCell::Configuration RegionOfInterestFilter::default_configuration() const
 {
     Configuration cfg;    
     cfg["roi_tag"] = m_roi_tag;
+    cfg["old_tag"] = m_old_tag;
     cfg["frame_tag"] = m_frame_tag;
     return cfg;
 }
@@ -48,7 +51,6 @@ WireCell::Configuration RegionOfInterestFilter::default_configuration() const
 
 bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_pointer& outframe)
 {
-
     log->debug("RegionOfInterestFilter: inside operator");
 
     if (!inframe) {             // eos
@@ -69,12 +71,18 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         }
     }
 
-    IFrame::trace_list_t roi_traces;
+    IFrame::trace_list_t roi_traces, old_traces;
     ITrace::vector* newtraces = new ITrace::vector; // will become shared_ptr.
 
     // outframe = inframe;
 
     auto traces = inframe->traces();
+    auto trace_tags = inframe->trace_tags();
+
+    log->debug("RegionOfInterestFilter: numero tags {}", trace_tags->size());
+
+    for (auto ttag : trace_tags)
+        log->debug("RegionOfInterestFilter: tag {}", ttag);
 
 
     for (auto trace : *traces.get())
@@ -129,9 +137,13 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         }
 
         SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
-        const size_t trace_index = newtraces->size();
-        roi_traces.push_back(trace_index);
+        const size_t roi_trace_index = newtraces->size();
+        roi_traces.push_back(roi_trace_index);
         newtraces->push_back(ITrace::pointer(tracetemp));
+        const size_t old_trace_index = newtraces->size();
+        old_traces.push_back(old_trace_index)
+        newtraces->push_back(ITrace::pointer(trace));
+        trace
 
     }
 
@@ -142,6 +154,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
                                         inframe->tick(), m_cmm);
     sframe->tag_frame(m_frame_tag);
     sframe->tag_traces(m_roi_tag, roi_traces);
+    sframe->tag_traces(m_old_tag, old_traces);
 
     outframe = IFrame::pointer(sframe);
 

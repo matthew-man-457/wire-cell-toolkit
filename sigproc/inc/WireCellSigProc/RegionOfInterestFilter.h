@@ -58,6 +58,7 @@ namespace WireCell {
       };
       
 		std::string m_roi_tag;
+		std::string m_old_tag;
 		std::string m_frame_tag;
         Log::logptr_t log;
 		Waveform::ChannelMaskMap m_cmm; 
