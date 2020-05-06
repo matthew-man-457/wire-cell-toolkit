@@ -51,7 +51,7 @@ WireCell::Configuration RegionOfInterestFilter::default_configuration() const
 
 bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_pointer& outframe)
 {
-    log->debug("RegionOfInterestFilter: inside operator");
+    log->debug("RegionOfInterestFilter: inside operator roi_tag {}, old_tag {}", m_roi_tag, m_old_tag);
 
     if (!inframe) {             // eos
         outframe = nullptr;
@@ -102,45 +102,45 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         for (int bin = 0; bin < (int)charges.size(); ++bin)
         {
-           //  float left_tail = 0.0;
-           //  float right_tail = 0.0;
-           //  float tail = 0.0;
-           //  float central_value = 0.0;
-           //  int ntail = 0;
-           //  if (bin>49)
-           //  {
-           //      for (int i = 0; i < 20; ++i)
-           //      {
-           //          left_tail += charges[bin-49+i]/20.; 
-           //      }
-           //      tail += left_tail;
-           //      ntail++;
-           //  }   
-           //  if (bin < ((int)charges.size()-49))
-           //  {              
-           //      for (int i = 0; i < 20; ++i)
-           //      {
-           //          right_tail += charges[bin+49-i]/20.; 
-           //      }
-           //      tail += right_tail;
-           //      ntail++;
-           // } 
-           // tail = tail/ntail;
-           // central_value = charges[bin]- tail;
-            // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, tail({}. {}, {}), Cvalue {}, median {}", bin, charges[bin], left_tail, right_tail, tail, central_value, median );  
+          //  float left_tail = 0.0;
+          //  float right_tail = 0.0;
+          //  float tail = 0.0;
+          //  float central_value = 0.0;
+          //  int ntail = 0;
+          //  if (bin>49)
+          //  {
+          //      for (int i = 0; i < 20; ++i)
+          //      {
+          //          left_tail += charges[bin-49+i]/20.; 
+          //      }
+          //      tail += left_tail;
+          //      ntail++;
+          //  }   
+          //  if (bin < ((int)charges.size()-49))
+          //  {              
+          //      for (int i = 0; i < 20; ++i)
+          //      {
+          //          right_tail += charges[bin+49-i]/20.; 
+          //      }
+          //      tail += right_tail;
+          //      ntail++;
+          // } 
+          // tail = tail/ntail;
+          // central_value = charges[bin]- tail;
+          // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, tail({}. {}, {}), Cvalue {}, median {}", bin, charges[bin], left_tail, right_tail, tail, central_value, median );  
 
-            float central_value = charges[bin]- median;
-            log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
-	    
-	    if(central_value<-15 or central_value>15)
-	    {
-		for(int delta = -30; delta < 31; ++delta)
-		{
-		    int newbin = bin+delta;
-		    if(newbin>-1 and newbin<(int)charges.size())
-			newcharge.at(newbin) = charges[newbin]- median;
-		}
-	    }
+          float central_value = charges[bin]- median;
+          log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
+
+          if(central_value<-15 or central_value>15)
+          {
+          	for(int delta = -30; delta < 31; ++delta)
+          	{
+          	    int newbin = bin+delta;
+          	    if(newbin>-1 and newbin<(int)charges.size())
+          		newcharge.at(newbin) = charges[newbin]- median;
+          	}
+          }
 
         }
 
