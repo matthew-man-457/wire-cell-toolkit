@@ -100,6 +100,9 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         log->debug("RegionOfInterestFilter: canale {}, tempo iniziale {}", channel, tbin);  
 
+        // int peak_flag=0;
+        // int region_end=-1;
+
         for (int bin = 0; bin < (int)charges.size(); ++bin)
         {
           //  float left_tail = 0.0;
@@ -138,9 +141,38 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           	{
           	    int newbin = bin+delta;
           	    if(newbin>-1 and newbin<(int)charges.size())
-          		newcharge.at(newbin) = charges[newbin]- median;
+          		    newcharge.at(newbin) = charges[newbin]- median;
           	}
+
+            // ITrace::ChargeSequence reducedcharge;
+            // if(peak_flag == 0 and region_end < bin)
+            // {
+            //   reduced_bin=0;
+            //   for(int delta = -30; delta < 1; ++delta)
+            //   {
+            //     int newbin = bin+delta;
+            //     if(newbin>-1 and newbin > region_end)
+            //       reducedcharge.push_back(charges[newbin]- median);
+            //   }
+            //   peak_flag=1;
+            // }
+            // else
+            // {
+            //   reducedcharge.push_back(charges[bin]- median);
+            //   peak_flag=1;
+            // }
           }
+          // else
+          // {
+          //   if(peak_flag==1)
+          //   {
+          //     region_end = bin + 30;
+          //     peak_flag = 0;
+          //   }
+
+          //   if(region_end > bin) reducedcharge.push_back(charges[bin]- median);
+
+          // }
 
         }
 
