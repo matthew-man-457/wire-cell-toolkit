@@ -157,7 +157,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
     SimpleFrame* sframe = new SimpleFrame(inframe->ident(), inframe->time(),
                                         ITrace::shared_vector(newtraces),
-                                        inframe->tick(), m_cmm);
+                                        inframe->tick(), inframe->masks());
     sframe->tag_frame(m_frame_tag);
     sframe->tag_traces(m_roi_tag, roi_traces);
     sframe->tag_traces(m_old_tag, old_traces);
