@@ -13,6 +13,7 @@
 #include "FrameUtils.h"          // fixme: needs to move to somewhere more useful.
 
 #include <unordered_map>
+#define PEAK 20
 
 WIRECELL_FACTORY(RegionOfInterestFilter, WireCell::SigProc::RegionOfInterestFilter,
                  WireCell::IFrameFilter, WireCell::IConfigurable)
@@ -48,6 +49,8 @@ WireCell::Configuration RegionOfInterestFilter::default_configuration() const
     return cfg;
 }
 
+static bool ispeak(float x) { return (x <0 or x>0); }
+static bool isZero(float x) { return x == 0.0; }
 
 bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_pointer& outframe)
 {
@@ -135,7 +138,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           float central_value = charges[bin]- median;
           log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
 
-          if(central_value<-15 or central_value>15)
+          if(central_value<-PEAK or central_value>PEAK)
           {
           	for(int delta = -30; delta < 31; ++delta)
           	{
@@ -176,10 +179,30 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         }
 
-        SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
-        const size_t roi_trace_index = newtraces->size();
-        roi_traces.push_back(roi_trace_index);
-        newtraces->push_back(ITrace::pointer(tracetemp));
+        std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
+        auto i1 = std::find_if(beg, end, ispeak); // first start
+
+        while (i1 != end)
+        {
+          // stop at next zero or end and make little temp vector
+          auto i2 = std::find_if(i1, end, isZero);
+          const std::vector<float> q(i1,i2);
+
+          // save out
+          const int newtbin = i1 - beg;
+          SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
+          const size_t roi_trace_index = newtraces.size();
+          roi_traces.push_back(roi_trace_index);
+          newtraces.push_back(ITrace::pointer(tracetemp));
+          // find start for next loop
+          i1 = std::find_if(i2, end, ispositive);
+        }
+
+
+        // SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
+        // const size_t roi_trace_index = newtraces->size();
+        // roi_traces.push_back(roi_trace_index);
+        // newtraces->push_back(ITrace::pointer(tracetemp));
         const size_t old_trace_index = newtraces->size();
         old_traces.push_back(old_trace_index);
         newtraces->push_back(ITrace::pointer(trace));
