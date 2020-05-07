@@ -191,11 +191,11 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           // save out
           const int newtbin = i1 - beg;
           SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
-          const size_t roi_trace_index = newtraces.size();
+          const size_t roi_trace_index = newtraces->size();
           roi_traces.push_back(roi_trace_index);
-          newtraces.push_back(ITrace::pointer(tracetemp));
+          newtraces->push_back(ITrace::pointer(tracetemp));
           // find start for next loop
-          i1 = std::find_if(i2, end, ispositive);
+          i1 = std::find_if(i2, end, ispeak);
         }
 
 
