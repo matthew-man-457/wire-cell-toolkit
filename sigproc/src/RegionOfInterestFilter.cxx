@@ -196,7 +196,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           const std::vector<float> q(i1,i2);
 
 
-          for (int pbin = 0; pbin < (int)p.size(); ++pbin)
+          for (int pbin = 0; pbin < (int)q.size(); ++pbin)
           {
             log->debug("RegionOfInterestFilter: q bin = {}, newtbin = {}", pbin, q[pbin]);
           }
