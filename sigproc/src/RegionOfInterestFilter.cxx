@@ -140,7 +140,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
           if(central_value<-PEAK or central_value>PEAK)
           {
-            log->debug("RegionOfInterestFilter: picco nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );
+
+            log->debug("RegionOfInterestFilter: picco nel bin {} = {}, median {}, Cvalue {}, ispeak {}", bin, charges[bin], median, central_value, ispeak(charges[bin]) );
           	for(int delta = -30; delta < 31; ++delta)
           	{
           	    int newbin = bin+delta;
@@ -185,7 +186,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         auto i1 = std::find_if(beg, end, ispeak); // first start
 
         // log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, *i1, beg, end, newcharge.size() );
-        log->debug("RegionOfInterestFilter: inizio striscia bin {}, {}, size {}",newcharge.begin(), *i1, newcharge.size() );
+        log->debug("RegionOfInterestFilter: inizio striscia bin {}, size {}", *i1, newcharge.size() );
 
         while (i1 != end)
         {
