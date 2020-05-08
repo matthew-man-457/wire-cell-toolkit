@@ -236,12 +236,13 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
     outframe = IFrame::pointer(sframe);
 
+    auto checktraces = outframe->traces();
 
-    for (auto newtrace : *newtraces.get())
+    for (auto checktrace : *checktraces.get())
     {
-        int channel = trace->channel();
-        int tbin = trace->tbin();
-        auto const& charges = trace->charge();
+        int channel = checktrace->channel();
+        int tbin = checktrace->tbin();
+        auto const& charges = checktrace->charge();
 
         log->debug("RegionOfInterestFilter: newtraces canale {}, tempo iniziale {}, size {}", channel, tbin,(int)charges.size());
 
