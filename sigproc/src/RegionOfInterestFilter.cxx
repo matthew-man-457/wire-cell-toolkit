@@ -194,6 +194,12 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           auto i2 = std::find_if(i1, end, isZero);
 
           const std::vector<float> q(i1,i2);
+
+
+          for (int pbin = 0; pbin < (int)p.size(); ++pbin)
+          {
+            log->debug("RegionOfInterestFilter: q bin = {}, newtbin = {}", pbin, q[pbin]);
+          }
           // save out
           const int newtbin = i1 - beg;
           SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
