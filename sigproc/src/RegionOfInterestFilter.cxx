@@ -185,6 +185,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         auto i1 = std::find_if(beg, end, ispeak); // first start
 
         log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, *i1, beg, end, newcharge.size() );
+        log->debug("RegionOfInterestFilter: inizio striscia bin {},, size {}", *i1, newcharge.size() );
 
         while (i1 != end)
         {
@@ -196,7 +197,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           const int newtbin = i1 - beg;
           SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
 
-          log->debug("RegionOfInterestFilter: fine striscia bin {} = {}, newtbin = {}", i2, *i2, newtbin);
+          log->debug("RegionOfInterestFilter: fine striscia bin = {}, newtbin = {}", *i2, newtbin);
 
           const size_t roi_trace_index = newtraces->size();
           roi_traces.push_back(roi_trace_index);
@@ -204,7 +205,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           // find start for next loop
           i1 = std::find_if(i2, end, ispeak);
 
-          log->debug("RegionOfInterestFilter: nuovo inizio striscia bin {} = {}", i1, *i1 );
+          log->debug("RegionOfInterestFilter: nuovo inizio striscia bin = {}", *i1 );
         }
 
 
