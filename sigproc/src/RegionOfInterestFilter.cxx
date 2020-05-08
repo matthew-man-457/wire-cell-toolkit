@@ -101,7 +101,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         std::nth_element(chargessort.begin(), chargessort.begin() + chargessort.size()/2, chargessort.end());
         float median = chargessort[chargessort.size()/2];
 
-        log->debug("RegionOfInterestFilter: canale {}, tempo iniziale {}", channel, tbin);  
+        log->debug("RegionOfInterestFilter: canale {}, tempo iniziale {}, size {}", channel, tbin, (int)charges.size());  
 
         // int peak_flag=0;
         // int region_end=-1;
@@ -235,6 +235,21 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     sframe->tag_traces(m_old_tag, old_traces);
 
     outframe = IFrame::pointer(sframe);
+
+
+    for (auto newtrace : *newtraces.get())
+    {
+        int channel = trace->channel();
+        int tbin = trace->tbin();
+        auto const& charges = trace->charge();
+
+        log->debug("RegionOfInterestFilter: newtraces canale {}, tempo iniziale {}, size {}", channel, tbin,(int)charges.size());
+
+        for (int bin = 0; bin < (int)charges.size(); ++bin)
+        {
+          log->debug("RegionOfInterestFilter: newtrace bin {} value = {}", bin, charges[bin] );
+        }
+    }
 
     // outframe = IFrame::pointer(sframe);
     log->debug("RegionOfInterestFilter: end operator");
