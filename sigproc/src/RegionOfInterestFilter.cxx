@@ -136,15 +136,17 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, tail({}. {}, {}), Cvalue {}, median {}", bin, charges[bin], left_tail, right_tail, tail, central_value, median );  
 
           float central_value = charges[bin]- median;
-          log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
+          // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
 
           if(central_value<-PEAK or central_value>PEAK)
           {
+            log->debug("RegionOfInterestFilter: picco nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );
           	for(int delta = -30; delta < 31; ++delta)
           	{
           	    int newbin = bin+delta;
           	    if(newbin>-1 and newbin<(int)charges.size())
           		    newcharge.at(newbin) = charges[newbin]- median;
+
           	}
 
             // ITrace::ChargeSequence reducedcharge;
@@ -182,20 +184,27 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
         auto i1 = std::find_if(beg, end, ispeak); // first start
 
+        log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, charges[i1], beg, end, newcharge.size() );
+
         while (i1 != end)
         {
           // stop at next zero or end and make little temp vector
           auto i2 = std::find_if(i1, end, isZero);
-          const std::vector<float> q(i1,i2);
 
+          const std::vector<float> q(i1,i2);
           // save out
           const int newtbin = i1 - beg;
           SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
+          
+          log->debug("RegionOfInterestFilter: fine striscia bin {} = {}, newtbin = {}", i2, charges[i2], newtbin);
+
           const size_t roi_trace_index = newtraces->size();
           roi_traces.push_back(roi_trace_index);
           newtraces->push_back(ITrace::pointer(tracetemp));
           // find start for next loop
           i1 = std::find_if(i2, end, ispeak);
+
+          log->debug("RegionOfInterestFilter: nuovo inizio striscia bin {} = {}", i1, charges[i1] );
         }
 
 
