@@ -183,6 +183,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
         auto i1 = std::find_if(beg, end, ispeak); // first start
+        std::cout<<"RegionOfInterestFilter: inizio "<<beg<<", fine "<<end<<std::endl;
 
         // log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, *i1, beg, end, newcharge.size() );
         log->debug("RegionOfInterestFilter: inizio striscia bin {},, size {}", *i1, newcharge.size() );
