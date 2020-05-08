@@ -220,9 +220,11 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         // const size_t roi_trace_index = newtraces->size();
         // roi_traces.push_back(roi_trace_index);
         // newtraces->push_back(ITrace::pointer(tracetemp));
-        const size_t old_trace_index = newtraces->size();
-        old_traces.push_back(old_trace_index);
-        newtraces->push_back(ITrace::pointer(trace));
+
+        
+        // const size_t old_trace_index = newtraces->size();
+        // old_traces.push_back(old_trace_index);
+        // newtraces->push_back(ITrace::pointer(trace));
     }
 
 
@@ -232,7 +234,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
                                         inframe->tick(), inframe->masks());
     sframe->tag_frame(m_frame_tag);
     sframe->tag_traces(m_roi_tag, roi_traces);
-    sframe->tag_traces(m_old_tag, old_traces);
+    // sframe->tag_traces(m_old_tag, old_traces);
 
     outframe = IFrame::pointer(sframe);
 
