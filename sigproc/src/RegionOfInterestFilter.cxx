@@ -183,11 +183,11 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         }
 
-        std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
-        auto i1 = std::find_if(beg, end, ispeak); // first start
+        // std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
+        // auto i1 = std::find_if(beg, end, ispeak); // first start
 
         // log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, *i1, beg, end, newcharge.size() );
-        log->debug("RegionOfInterestFilter: begin of the stripe bin {}, size {}", *i1, newcharge.size() );
+        // log->debug("RegionOfInterestFilter: begin of the stripe bin {}, size {}", *i1, newcharge.size() );
 
         ///////////////TEMPORARY COMMENTED////////////////////
         // while (i1 != end)
@@ -224,9 +224,9 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         newtraces->push_back(ITrace::pointer(tracetemp));
 
         
-        // const size_t old_trace_index = newtraces->size();
-        // old_traces.push_back(old_trace_index);
-        // newtraces->push_back(ITrace::pointer(trace));
+        const size_t old_trace_index = newtraces->size();
+        old_traces.push_back(old_trace_index);
+        newtraces->push_back(ITrace::pointer(trace));
     }
 
 
@@ -236,7 +236,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
                                         inframe->tick(), inframe->masks());
     sframe->tag_frame(m_frame_tag);
     sframe->tag_traces(m_roi_tag, roi_traces);
-    // sframe->tag_traces(m_old_tag, old_traces);
+    sframe->tag_traces(m_old_tag, old_traces);
 
     outframe = IFrame::pointer(sframe);
 
