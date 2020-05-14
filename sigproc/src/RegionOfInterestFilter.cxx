@@ -14,6 +14,7 @@
 
 #include <unordered_map>
 #define PEAK 20
+#define ROI 120
 
 WIRECELL_FACTORY(RegionOfInterestFilter, WireCell::SigProc::RegionOfInterestFilter,
                  WireCell::IFrameFilter, WireCell::IConfigurable)
@@ -63,12 +64,12 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     // Convert to OSP cmm indexed by OSB sequential channels, NOT WCT channel ID.
     m_cmm.clear();
     for (auto cm : inframe->masks())
-    {  //in->masks restituisce a map (ChannelMaskMap) fatta da una stringa (che va in name) e un altra map (in m) ChannelMasks
+    {  //in->masks give back a map (ChannelMaskMap) done with a string (in name) and on other map (in m) ChannelMasks
         const std::string name = cm.first;
         for (auto m: cm.second)
-        {   //m è la mappa ChannelMasks fatta da un int (wct_channel_ident) e da un BinRangeList
+        {   //m is the map ChannelMasks done with an int (wct_channel_ident) and a BinRangeList
             const int wct_channel_ident = m.first;
-            const OspChan& och = m_channel_map[wct_channel_ident]; //viene dalla configurazione
+            const OspChan& och = m_channel_map[wct_channel_ident]; //from config
             if (och.plane < 0) continue;               // in case user gives us multi apa frame
             m_cmm[name][och.channel] = m.second;  //m.second è la BinRangeList
         }
@@ -82,7 +83,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     auto traces = inframe->traces();
     auto trace_tags = inframe->trace_tags();
 
-    log->debug("RegionOfInterestFilter: numero tags {}", trace_tags.size());
+    log->debug("RegionOfInterestFilter: num tags {}", trace_tags.size());
 
     for (auto ttag : trace_tags)
         log->debug("RegionOfInterestFilter: tag {}", ttag);
@@ -101,7 +102,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         std::nth_element(chargessort.begin(), chargessort.begin() + chargessort.size()/2, chargessort.end());
         float median = chargessort[chargessort.size()/2];
 
-        log->debug("RegionOfInterestFilter: canale {}, tempo iniziale {}, size {}", channel, tbin, (int)charges.size());  
+        log->debug("RegionOfInterestFilter: channel {}, initial time {}, size {}", channel, tbin, (int)charges.size());  
 
         // int peak_flag=0;
         // int region_end=-1;
@@ -141,8 +142,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           if(central_value<-PEAK or central_value>PEAK)
           {
 
-            log->debug("RegionOfInterestFilter: picco nel bin {} = {}, median {}, Cvalue {}, ispeak {}", bin, charges[bin], median, central_value, ispeak(charges[bin]) );
-          	for(int delta = -30; delta < 31; ++delta)
+            log->debug("RegionOfInterestFilter: peak in the bin {} = {}, median {}, Cvalue {}, ispeak {}", bin, charges[bin], median, central_value, ispeak(charges[bin]) );
+          	for(int delta = -ROI; delta < ROI; ++delta)
           	{
           	    int newbin = bin+delta;
           	    if(newbin>-1 and newbin<(int)charges.size())
@@ -186,40 +187,41 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         auto i1 = std::find_if(beg, end, ispeak); // first start
 
         // log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, *i1, beg, end, newcharge.size() );
-        log->debug("RegionOfInterestFilter: inizio striscia bin {}, size {}", *i1, newcharge.size() );
+        log->debug("RegionOfInterestFilter: begin of the stripe bin {}, size {}", *i1, newcharge.size() );
 
-        while (i1 != end)
-        {
-          // stop at next zero or end and make little temp vector
-          auto i2 = std::find_if(i1, end, isZero);
+        ///////////////TEMPORARY COMMENTED////////////////////
+        // while (i1 != end)
+        // {
+        //   // stop at next zero or end and make little temp vector
+        //   auto i2 = std::find_if(i1, end, isZero);
 
-          const std::vector<float> q(i1,i2);
-
-
-          for (int pbin = 0; pbin < (int)q.size(); ++pbin)
-          {
-            log->debug("RegionOfInterestFilter: q bin = {}, newtbin = {}", pbin, q[pbin]);
-          }
-          // save out
-          const int newtbin = i1 - beg;
-          SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
-
-          log->debug("RegionOfInterestFilter: fine striscia bin = {}, newtbin = {}", *i2, newtbin);
-
-          const size_t roi_trace_index = newtraces->size();
-          roi_traces.push_back(roi_trace_index);
-          newtraces->push_back(ITrace::pointer(tracetemp));
-          // find start for next loop
-          i1 = std::find_if(i2, end, ispeak);
-
-          log->debug("RegionOfInterestFilter: nuovo inizio striscia bin = {}", *i1 );
-        }
+        //   const std::vector<float> q(i1,i2);
 
 
-        // SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
-        // const size_t roi_trace_index = newtraces->size();
-        // roi_traces.push_back(roi_trace_index);
-        // newtraces->push_back(ITrace::pointer(tracetemp));
+        //   for (int pbin = 0; pbin < (int)q.size(); ++pbin)
+        //   {
+        //     log->debug("RegionOfInterestFilter: q bin = {}, newtbin = {}", pbin, q[pbin]);
+        //   }
+        //   // save out
+        //   const int newtbin = i1 - beg;
+        //   SimpleTrace *tracetemp = new SimpleTrace(channel, newtbin, q);
+
+        //   log->debug("RegionOfInterestFilter: end stripe bin = {}, newtbin = {}", *i2, newtbin);
+
+        //   const size_t roi_trace_index = newtraces->size();
+        //   roi_traces.push_back(roi_trace_index);
+        //   newtraces->push_back(ITrace::pointer(tracetemp));
+        //   // find start for next loop
+        //   i1 = std::find_if(i2, end, ispeak);
+
+        //   log->debug("RegionOfInterestFilter: begin new stripe bin = {}", *i1 );
+        // }
+        //////////////////////////////////////
+        //////////TO comment if is uncommented the part over this
+        SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
+        const size_t roi_trace_index = newtraces->size();
+        roi_traces.push_back(roi_trace_index);
+        newtraces->push_back(ITrace::pointer(tracetemp));
 
         
         // const size_t old_trace_index = newtraces->size();
@@ -246,7 +248,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         int tbin = checktrace->tbin();
         auto const& charges = checktrace->charge();
 
-        log->debug("RegionOfInterestFilter: newtraces canale {}, tempo iniziale {}, size {}", channel, tbin,(int)charges.size());
+        log->debug("RegionOfInterestFilter: newtraces channel {}, start time {}, size {}", channel, tbin,(int)charges.size());
 
         for (int bin = 0; bin < (int)charges.size(); ++bin)
         {
