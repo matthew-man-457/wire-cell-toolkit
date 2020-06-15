@@ -15,6 +15,7 @@
 #include <unordered_map>
 #define PEAK 20
 #define ROI 120
+#define ROI_ch 10
 
 WIRECELL_FACTORY(RegionOfInterestFilter, WireCell::SigProc::RegionOfInterestFilter,
                  WireCell::IFrameFilter, WireCell::IConfigurable)
@@ -88,6 +89,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     for (auto ttag : trace_tags)
         log->debug("RegionOfInterestFilter: tag {}", ttag);
 
+    int num_channels = traces->size(); // number of channels
+    int ch_ind = 0; // channel indexer
 
     for (auto trace : *traces.get())
     {
@@ -183,6 +186,48 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         }
 
+        // Channel ROI
+        for(int bin=0; bin<(int)newcharge.size(); bin++)
+        {
+          // Lower channel ROI
+          auto prev_trace = trace->at(ch_ind-1); // consider looking back farther (this would increase runtime though)
+          auto prev_charges = prev_trace->charge();
+          // non-zero in channel and zero in channel-1 (start of track)
+          if(ispeak(newcharge.at(bin)) and isZero(prev_charges.at(bin)))
+          {
+            // fill lower channel ROI
+            for(int j=-ROI_ch, j<0, j++)
+            {
+              int update_channel = ch_ind+j;
+              if(update_channel>-1)
+              {
+                // fill ROI
+                auto update_trace = newtraces->at(update_channel);
+                auto update_charges = update_trace->charge();
+                update_charges.at(bin) = prev_charges[bin] - median;
+              } 
+            }
+          }
+
+          // Upper channel ROI
+          // zero in channel and non-zero in channel-1 (end of track)
+          if(isZero(newcharge.at(bin)) and ispeak(prev_charges.at(bin)))
+          {
+            // fill upper channel ROI
+            for(int j=1, j<ROI_ch+1, j++)
+            {
+              int update_channel = ch_ind+j;
+              if(update_channel<num_channels)
+              {
+                // fill ROI
+                auto update_trace = newtraces->at(update_channel);
+                auto update_charges = update_trace->charge();
+                update_charges.at(bin) = prev_charges[bin] - median;
+              } 
+            }
+          }
+        }
+
         // std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
         // auto i1 = std::find_if(beg, end, ispeak); // first start
 
@@ -227,6 +272,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         const size_t old_trace_index = newtraces->size();
         old_traces.push_back(old_trace_index);
         newtraces->push_back(ITrace::pointer(trace));
+
+        ch_ind = ch_ind+1; // iterate channel index
     }
 
 
