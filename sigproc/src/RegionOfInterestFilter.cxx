@@ -201,7 +201,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             if(ispeak(newcharge.at(bin)) and isZero(prev_newcharges.at(bin)))
             {
               // fill lower channel ROI
-              for(int j=-ROI_ch, j<0, j++)
+              for(int j=-ROI_ch; j<0; j++)
               {
                 int update_channel = ch_ind+j;
                 if(update_channel>-1)
@@ -219,7 +219,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             if(isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
             {
               // fill upper channel ROI
-              for(int j=1, j<ROI_ch+1, j++)
+              for(int j=1; j<ROI_ch+1; j++)
               {
                 int update_channel = ch_ind+j;
                 if(update_channel<num_channels)
