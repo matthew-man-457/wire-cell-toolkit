@@ -136,24 +136,24 @@ local sp_pipes = [sp.make_sigproc(a) for a in tools.anodes];
 //                                nf_pipes[n], magnify_pipes2[n] ], "parallel_pipe_%d"%n)
 //                    for n in std.range(0, std.length(tools.anodes)-1)];
 
-// local roi_filter = [g.pnode({
-// type: 'RegionOfInterestFilter',  //parameter to configure the node (type and name pair should be unique)
-// name: 'roi_filter%d' % n,
-// data: {
-//   roi_tag: 'roi%d' % n,
-//   old_tag: 'oriv%d' % n
-// }, 
-// }, nin=1, nout=1, uses=[]),
-// for n in std.range(0, std.length(tools.anodes) - 1) //tools.anodes sono le linee parallele del grafico
-// ]; 
+local roi_filter = [g.pnode({
+type: 'RegionOfInterestFilter',  //parameter to configure the node (type and name pair should be unique)
+name: 'roi_filter%d' % n,
+data: {
+  roi_tag: 'roi%d' % n,
+  old_tag: 'oriv%d' % n
+}, 
+}, nin=1, nout=1, uses=[]),
+for n in std.range(0, std.length(tools.anodes) - 1) //tools.anodes sono le linee parallele del grafico
+]; 
 
 local parallel_pipes = [
   g.pipeline([
                sn_pipes[n],
                magnify_pipes[n],
-               //roi_filter[n],
-               //magnify_pipes6[n],
-               //magnify_pipes7[n],
+               roi_filter[n],
+               magnify_pipes6[n],
+               magnify_pipes7[n],
              ],
              'parallel_pipe_%d' % n)
   for n in std.range(0, std.length(tools.anodes) - 1)
