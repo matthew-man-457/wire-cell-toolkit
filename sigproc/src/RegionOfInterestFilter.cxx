@@ -187,52 +187,52 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         }
 
         // Channel ROI
-        if(ch_ind>0)
-        {
-          auto prev_newtrace = newtraces->at(ch_ind-1); // newtrace at channel-1 (after ROI in time)
-          auto prev_newcharges = prev_newtrace->charge();
-          auto prev_trace = traces->at(ch_ind-1); // trace at channel-1 (before ROI in time)
-          auto prev_charges = prev_trace->charge();
+        // if(ch_ind>0)
+        // {
+        //   auto prev_newtrace = newtraces->at(ch_ind-1); // newtrace at channel-1 (after ROI in time)
+        //   auto prev_newcharges = prev_newtrace->charge();
+        //   auto prev_trace = traces->at(ch_ind-1); // trace at channel-1 (before ROI in time)
+        //   auto prev_charges = prev_trace->charge();
 
-          for(int bin=0; bin<(int)newcharge.size(); bin++)
-          {
-            // Lower channel ROI
-            // non-zero in channel and zero in channel-1 (start of track)
-            if(ispeak(newcharge.at(bin)) and isZero(prev_newcharges.at(bin)))
-            {
-              // fill lower channel ROI
-              for(int j=-ROI_ch; j<0; j++)
-              {
-                int update_channel = ch_ind+j;
-                if(update_channel>-1)
-                {
-                  // fill ROI
-                  auto update_trace = newtraces->at(update_channel);
-                  auto update_charges = update_trace->charge();
-                  update_charges.at(bin) = prev_charges[bin] - median;
-                } 
-              }
-            }
+        //   for(int bin=0; bin<(int)newcharge.size(); bin++)
+        //   {
+        //     // Lower channel ROI
+        //     // non-zero in channel and zero in channel-1 (start of track)
+        //     if(ispeak(newcharge.at(bin)) and isZero(prev_newcharges.at(bin)))
+        //     {
+        //       // fill lower channel ROI
+        //       for(int j=-ROI_ch; j<0; j++)
+        //       {
+        //         int update_channel = ch_ind+j;
+        //         if(update_channel>-1)
+        //         {
+        //           // fill ROI
+        //           auto update_trace = newtraces->at(update_channel);
+        //           auto update_charges = update_trace->charge();
+        //           update_charges.at(bin) = prev_charges[bin] - median;
+        //         } 
+        //       }
+        //     }
 
-            // Upper channel ROI
-            // zero in channel and non-zero in channel-1 (end of track)
-            if(isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
-            {
-              // fill upper channel ROI
-              for(int j=1; j<ROI_ch+1; j++)
-              {
-                int update_channel = ch_ind+j;
-                if(update_channel<num_channels)
-                {
-                  // fill ROI
-                  auto update_trace = newtraces->at(update_channel);
-                  auto update_charges = update_trace->charge();
-                  update_charges.at(bin) = prev_charges[bin] - median;
-                } 
-              }
-            }
-          }
-        }
+        //     // Upper channel ROI
+        //     // zero in channel and non-zero in channel-1 (end of track)
+        //     if(isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
+        //     {
+        //       // fill upper channel ROI
+        //       for(int j=1; j<ROI_ch+1; j++)
+        //       {
+        //         int update_channel = ch_ind+j;
+        //         if(update_channel<num_channels)
+        //         {
+        //           // fill ROI
+        //           auto update_trace = newtraces->at(update_channel);
+        //           auto update_charges = update_trace->charge();
+        //           update_charges.at(bin) = prev_charges[bin] - median;
+        //         } 
+        //       }
+        //     }
+        //   }
+        // }
 
         // std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
         // auto i1 = std::find_if(beg, end, ispeak); // first start
@@ -283,6 +283,10 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     }
 
 
+    /*for (auto trace : *traces.get())
+    {
+
+    }*/
 
     SimpleFrame* sframe = new SimpleFrame(inframe->ident(), inframe->time(),
                                         ITrace::shared_vector(newtraces),
