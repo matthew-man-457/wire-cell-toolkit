@@ -17,6 +17,10 @@
 #define ROI 120
 #define ROI_ch 10
 
+// testing
+#include <iostream>
+using namespace std;
+
 WIRECELL_FACTORY(RegionOfInterestFilter, WireCell::SigProc::RegionOfInterestFilter,
                  WireCell::IFrameFilter, WireCell::IConfigurable)
 
@@ -91,6 +95,12 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
     int num_channels = traces->size(); // number of channels
     int ch_ind = 0; // channel indexer
+
+    // auto ex_trace = traces->at(0);
+    // auto ex_charges = ex_trace->charge();
+    // int charges_size = charges.size();
+    int charges_size = traces->at(0)->charge().size();
+    int num_store_ch[charges_size] = {}; // number of upper channels to store ROI info per bin (initialized to 0)
 
     for (auto trace : *traces.get())
     {
@@ -187,52 +197,59 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         }
 
         // Channel ROI
-        // if(ch_ind>0)
-        // {
-        //   auto prev_newtrace = newtraces->at(ch_ind-1); // newtrace at channel-1 (after ROI in time)
-        //   auto prev_newcharges = prev_newtrace->charge();
-        //   auto prev_trace = traces->at(ch_ind-1); // trace at channel-1 (before ROI in time)
-        //   auto prev_charges = prev_trace->charge();
+        if(ch_ind>0)
+        {
+          auto prev_newtrace = newtraces->at(ch_ind-1); // newtrace at channel-1 (after ROI in time)
+          auto prev_newcharges = prev_newtrace->charge();
+          auto prev_trace = traces->at(ch_ind-1); // trace at channel-1 (before ROI in time)
+          auto prev_charges = prev_trace->charge();
 
-        //   for(int bin=0; bin<(int)newcharge.size(); bin++)
-        //   {
-        //     // Lower channel ROI
-        //     // non-zero in channel and zero in channel-1 (start of track)
-        //     if(ispeak(newcharge.at(bin)) and isZero(prev_newcharges.at(bin)))
-        //     {
-        //       // fill lower channel ROI
-        //       for(int j=-ROI_ch; j<0; j++)
-        //       {
-        //         int update_channel = ch_ind+j;
-        //         if(update_channel>-1)
-        //         {
-        //           // fill ROI
-        //           auto update_trace = newtraces->at(update_channel);
-        //           auto update_charges = update_trace->charge();
-        //           update_charges.at(bin) = prev_charges[bin] - median;
-        //         } 
-        //       }
-        //     }
+          for(int bin=0; bin<(int)newcharge.size(); bin++)
+          {
+            // Lower channel ROI
+            // non-zero in channel and zero in channel-1 (start of track)
+            if(ispeak(newcharge.at(bin)) and isZero(prev_newcharges.at(bin)))
+            {
+              // fill lower channel ROI
+              for(int j=-ROI_ch; j<0; j++)
+              {
+                int update_channel = ch_ind+j;
+                if(update_channel>-1)
+                {
+                  // fill ROI
+                  auto update_trace = newtraces->at(update_channel);
+                  auto update_charges = update_trace->charge();
+                  update_charges.at(bin) = prev_charges[bin] - median; // note this is the median from curr_channel, not update_channel
+                } 
+              }
+            }
 
-        //     // Upper channel ROI
-        //     // zero in channel and non-zero in channel-1 (end of track)
-        //     if(isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
-        //     {
-        //       // fill upper channel ROI
-        //       for(int j=1; j<ROI_ch+1; j++)
-        //       {
-        //         int update_channel = ch_ind+j;
-        //         if(update_channel<num_channels)
-        //         {
-        //           // fill ROI
-        //           auto update_trace = newtraces->at(update_channel);
-        //           auto update_charges = update_trace->charge();
-        //           update_charges.at(bin) = prev_charges[bin] - median;
-        //         } 
-        //       }
-        //     }
-        //   }
-        // }
+            // Upper channel ROI
+            // zero in channel and non-zero in channel-1 (end of track)
+            if(num_store_ch[bin]==0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
+            {
+              // fill upper channel ROI
+              newcharge.at(bin) = prev_charges[bin] - median;
+              // set num_store_ch
+              num_store_ch[bin] = ROI_ch;
+            }
+            else if(num_store_ch>0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
+            {
+              // fill upper channel ROI
+              newcharge.at(bin) = prev_charges[bin] - median;
+            }
+
+            // iterate num_store_ch
+            if(num_store_ch[bin]>1)
+              num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
+            else if(num_store_ch[bin]==1)
+              num_store_ch[bin] -= -1; // -1 means end of upper ROI
+            else if(num_store_ch[bin]==-1)
+              num_store_ch[bin] -= 0; // 0 means ready to find next end of track 
+
+          }
+        }
+        
 
         // std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
         // auto i1 = std::find_if(beg, end, ispeak); // first start
