@@ -117,6 +117,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         log->debug("RegionOfInterestFilter: channel {}, initial time {}, size {}", channel, tbin, (int)charges.size());  
 
+        // Time ROI
         for (int bin = 0; bin < (int)charges.size(); ++bin)
         {
           float central_value = charges[bin]- median;
@@ -138,11 +139,12 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           }
         }
 
+        // Write newcharge to ROI_array
+        ROI_array[ch_ind] = newcharge;
+
         // Channel ROI
         if(ch_ind>0)
         {
-          auto prev_charges = traces->at(ch_ind-1)->charge(); // charges in channel-1 for upper ROI
-
           for(int bin=0; bin<(int)newcharge.size(); bin++)
           {
             // Lower channel ROI
@@ -163,18 +165,18 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             }
 
             // Upper channel ROI
-            // zero in channel and non-zero in channel-1 (end of track)
+            // zero in channel and peak in channel-1 (end of track)
             if(num_store_ch[bin]==0 and peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
             {
               // fill upper channel ROI
-              ROI_array[update_channel].at(bin) = prev_charges[bin] - median; // note this is the median from curr_channel, not prev_channel
+              ROI_array[ch_ind].at(bin) = charges[bin] - median;
               // set num_store_ch
               num_store_ch[bin] = ROI_ch;
             }
             else if(num_store_ch>0 and peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
             {
               // fill upper channel ROI
-              ROI_array[update_channel].at(bin) = prev_charges[bin] - median;
+              ROI_array[ch_ind].at(bin) = charges[bin] - median;
             }
 
             // iterate num_store_ch
@@ -223,8 +225,6 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         //////////////////////////////////////
         //////////TO comment if is uncommented the part over this
 
-        // Write newcharge to ROI_array
-        ROI_array[ch_ind] = newcharge;
         ch_ind = ch_ind+1; // iterate channel index
     }
 
