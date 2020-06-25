@@ -94,14 +94,14 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         log->debug("RegionOfInterestFilter: tag {}", ttag);
 
     int num_channels = traces->size(); // number of channels
+    int charges_size = traces->at(0)->charge().size(); // number of time bins
+    ITrace::ChargeSequence ROI_array[num_channels]; // ROI of traces, before storing as newtraces
+    
     int ch_ind = 0; // channel indexer
-
-    // auto ex_trace = traces->at(0);
-    // auto ex_charges = ex_trace->charge();
-    // int charges_size = charges.size();
-    int charges_size = traces->at(0)->charge().size();
     int num_store_ch[charges_size] = {}; // number of upper channels to store ROI info per bin (initialized to 0)
+    int peak_bin_flag[2][charges_size] = {}; // peak_bin_flag[0][i] is previous ch peak flag in ith bin, peak_bin_flag[1] is curr ch
 
+    // Store ROI in 
     for (auto trace : *traces.get())
     {
         int channel = trace->channel();
@@ -117,38 +117,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         log->debug("RegionOfInterestFilter: channel {}, initial time {}, size {}", channel, tbin, (int)charges.size());  
 
-        // int peak_flag=0;
-        // int region_end=-1;
-
         for (int bin = 0; bin < (int)charges.size(); ++bin)
         {
-          //  float left_tail = 0.0;
-          //  float right_tail = 0.0;
-          //  float tail = 0.0;
-          //  float central_value = 0.0;
-          //  int ntail = 0;
-          //  if (bin>49)
-          //  {
-          //      for (int i = 0; i < 20; ++i)
-          //      {
-          //          left_tail += charges[bin-49+i]/20.; 
-          //      }
-          //      tail += left_tail;
-          //      ntail++;
-          //  }   
-          //  if (bin < ((int)charges.size()-49))
-          //  {              
-          //      for (int i = 0; i < 20; ++i)
-          //      {
-          //          right_tail += charges[bin+49-i]/20.; 
-          //      }
-          //      tail += right_tail;
-          //      ntail++;
-          // } 
-          // tail = tail/ntail;
-          // central_value = charges[bin]- tail;
-          // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, tail({}. {}, {}), Cvalue {}, median {}", bin, charges[bin], left_tail, right_tail, tail, central_value, median );  
-
           float central_value = charges[bin]- median;
           // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
 
@@ -158,57 +128,24 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             log->debug("RegionOfInterestFilter: peak in the bin {} = {}, median {}, Cvalue {}, ispeak {}", bin, charges[bin], median, central_value, ispeak(charges[bin]) );
           	for(int delta = -ROI; delta < ROI; ++delta)
           	{
-          	    int newbin = bin+delta;
-          	    if(newbin>-1 and newbin<(int)charges.size())
-          		    newcharge.at(newbin) = charges[newbin]- median;
-
+        	    int newbin = bin+delta;
+        	    if(newbin>-1 and newbin<(int)charges.size())
+              {
+        		    newcharge.at(newbin) = charges[newbin]- median;
+                peak_bin_flag[1][newbin] = 1;
+              }
           	}
-
-            // ITrace::ChargeSequence reducedcharge;
-            // if(peak_flag == 0 and region_end < bin)
-            // {
-            //   reduced_bin=0;
-            //   for(int delta = -30; delta < 1; ++delta)
-            //   {
-            //     int newbin = bin+delta;
-            //     if(newbin>-1 and newbin > region_end)
-            //       reducedcharge.push_back(charges[newbin]- median);
-            //   }
-            //   peak_flag=1;
-            // }
-            // else
-            // {
-            //   reducedcharge.push_back(charges[bin]- median);
-            //   peak_flag=1;
-            // }
           }
-          // else
-          // {
-          //   if(peak_flag==1)
-          //   {
-          //     region_end = bin + 30;
-          //     peak_flag = 0;
-          //   }
-
-          //   if(region_end > bin) reducedcharge.push_back(charges[bin]- median);
-
-          // }
-
         }
 
         // Channel ROI
         if(ch_ind>0)
         {
-          auto prev_newtrace = newtraces->at(ch_ind-1); // newtrace at channel-1 (after ROI in time)
-          auto prev_newcharges = prev_newtrace->charge();
-          auto prev_trace = traces->at(ch_ind-1); // trace at channel-1 (before ROI in time)
-          auto prev_charges = prev_trace->charge();
-
           for(int bin=0; bin<(int)newcharge.size(); bin++)
           {
             // Lower channel ROI
             // non-zero in channel and zero in channel-1 (start of track)
-            if(ispeak(newcharge.at(bin)) and isZero(prev_newcharges.at(bin)))
+            if(peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
             {
               // fill lower channel ROI
               for(int j=-ROI_ch; j<0; j++)
@@ -217,45 +154,42 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
                 if(update_channel>-1)
                 {
                   // fill ROI
-                  auto update_trace = newtraces->at(update_channel);
-                  auto update_charges = update_trace->charge();
-                  update_charges.at(bin) = prev_charges[bin] - median; // note this is the median from curr_channel, not update_channel
+                  prev_charges = traces->at(update_channel)->charge();
+                  ROI_array[update_channel].at(bin) = prev_charges[bin] - median; // note this is the median from curr_channel, not update_channel
                 } 
               }
             }
 
             // Upper channel ROI
             // zero in channel and non-zero in channel-1 (end of track)
-            if(num_store_ch[bin]==0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
-            {
-              // fill upper channel ROI
-              newcharge.at(bin) = prev_charges[bin] - median;
-              // set num_store_ch
-              num_store_ch[bin] = ROI_ch;
-            }
-            else if(num_store_ch>0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
-            {
-              // fill upper channel ROI
-              newcharge.at(bin) = prev_charges[bin] - median;
-            }
+            // if(num_store_ch[bin]==0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
+            // {
+            //   // fill upper channel ROI
+            //   newcharge.at(bin) = prev_charges[bin] - median;
+            //   // set num_store_ch
+            //   num_store_ch[bin] = ROI_ch;
+            // }
+            // else if(num_store_ch>0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
+            // {
+            //   // fill upper channel ROI
+            //   newcharge.at(bin) = prev_charges[bin] - median;
+            // }
 
-            // iterate num_store_ch
-            if(num_store_ch[bin]>1)
-              num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
-            else if(num_store_ch[bin]==1)
-              num_store_ch[bin] -= -1; // -1 means end of upper ROI
-            else if(num_store_ch[bin]==-1)
-              num_store_ch[bin] -= 0; // 0 means ready to find next end of track 
+            // // iterate num_store_ch
+            // if(num_store_ch[bin]>1)
+            //   num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
+            // else if(num_store_ch[bin]==1)
+            //   num_store_ch[bin] -= -1; // -1 means end of upper ROI
+            // else if(num_store_ch[bin]==-1)
+            //   num_store_ch[bin] -= 0; // 0 means ready to find next end of track 
+
+            // update peak_bin_flag
+            peak_bin_flag[0][bin] = peak_bin_flag[1][bin];
+            peak_bin_flag[1][bin] = 0;
 
           }
         }
-        
 
-        // std::vector<float>::const_iterator beg=newcharge.begin(), end=newcharge.end();
-        // auto i1 = std::find_if(beg, end, ispeak); // first start
-
-        // log->debug("RegionOfInterestFilter: inizio striscia bin {} = {}, inizio vettore {}, fine {}, size {}", i1, *i1, beg, end, newcharge.size() );
-        // log->debug("RegionOfInterestFilter: begin of the stripe bin {}, size {}", *i1, newcharge.size() );
 
         ///////////////TEMPORARY COMMENTED////////////////////
         // while (i1 != end)
@@ -286,24 +220,32 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         // }
         //////////////////////////////////////
         //////////TO comment if is uncommented the part over this
-        SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
-        const size_t roi_trace_index = newtraces->size();
-        roi_traces.push_back(roi_trace_index);
-        newtraces->push_back(ITrace::pointer(tracetemp));
 
-        
-        const size_t old_trace_index = newtraces->size();
-        old_traces.push_back(old_trace_index);
-        newtraces->push_back(ITrace::pointer(trace));
-
+        // Write newcharge to ROI_array
+        ROI_array[ch_ind] = newcharge;
         ch_ind = ch_ind+1; // iterate channel index
     }
 
-
-    /*for (auto trace : *traces.get())
+    // Write ROI_array to newtraces
+    ch_ind = 0;
+    for (auto trace : *traces.get())
     {
+      int channel = trace->channel();
+      int tbin = trace->tbin();
+      ITrace::ChargeSequence newcharge = ROI_array[ch_ind];
 
-    }*/
+      SimpleTrace *tracetemp = new SimpleTrace(channel, tbin, newcharge);
+      const size_t roi_trace_index = newtraces->size();
+      roi_traces.push_back(roi_trace_index);
+      newtraces->push_back(ITrace::pointer(tracetemp));
+
+      
+      const size_t old_trace_index = newtraces->size();
+      old_traces.push_back(old_trace_index);
+      newtraces->push_back(ITrace::pointer(trace));
+
+      ch_ind = ch_ind+1;
+    }
 
     SimpleFrame* sframe = new SimpleFrame(inframe->ident(), inframe->time(),
                                         ITrace::shared_vector(newtraces),
