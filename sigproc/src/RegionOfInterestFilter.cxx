@@ -99,7 +99,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     
     int ch_ind = 0; // channel indexer
     int num_store_ch[charges_size] = {}; // number of upper channels to store ROI info per bin (initialized to 0)
-    int peak_bin_flag[2][charges_size] = {}; // peak_bin_flag[0][i] is previous ch peak flag in ith bin, peak_bin_flag[1] is curr ch
+    int peak_bin_flag[2][charges_size]; // peak_bin_flag[0][i] is curr ch peak flag in ith bin, peak_bin_flag[1] is prev ch
 
     // Store ROI in 
     for (auto trace : *traces.get())
@@ -132,7 +132,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         	    if(newbin>-1 and newbin<(int)charges.size())
               {
         		    newcharge.at(newbin) = charges[newbin]- median;
-                peak_bin_flag[1][newbin] = 1;
+                peak_bin_flag[0][newbin] = 1;
               }
           	}
           }
@@ -141,11 +141,13 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         // Channel ROI
         if(ch_ind>0)
         {
+          auto prev_charges = traces->at(ch_ind-1)->charge(); // charges in channel-1 for upper ROI
+
           for(int bin=0; bin<(int)newcharge.size(); bin++)
           {
             // Lower channel ROI
-            // non-zero in channel and zero in channel-1 (start of track)
-            if(peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
+            // peak in channel and zero in channel-1 (start of track)
+            if(peak_bin_flag[0][bin]==1 and peak_bin_flag[1][bin]==0)
             {
               // fill lower channel ROI
               for(int j=-ROI_ch; j<0; j++)
@@ -154,38 +156,38 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
                 if(update_channel>-1)
                 {
                   // fill ROI
-                  prev_charges = traces->at(update_channel)->charge();
-                  ROI_array[update_channel].at(bin) = prev_charges[bin] - median; // note this is the median from curr_channel, not update_channel
+                  auto update_charges = traces->at(update_channel)->charge(); // charges in update_channel for lower ROI
+                  ROI_array[update_channel].at(bin) = update_charges[bin] - median; // note this is the median from curr_channel, not update_channel
                 } 
               }
             }
 
             // Upper channel ROI
             // zero in channel and non-zero in channel-1 (end of track)
-            // if(num_store_ch[bin]==0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
-            // {
-            //   // fill upper channel ROI
-            //   newcharge.at(bin) = prev_charges[bin] - median;
-            //   // set num_store_ch
-            //   num_store_ch[bin] = ROI_ch;
-            // }
-            // else if(num_store_ch>0 and isZero(newcharge.at(bin)) and ispeak(prev_newcharges.at(bin)))
-            // {
-            //   // fill upper channel ROI
-            //   newcharge.at(bin) = prev_charges[bin] - median;
-            // }
+            if(num_store_ch[bin]==0 and peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
+            {
+              // fill upper channel ROI
+              ROI_array[update_channel].at(bin) = prev_charges[bin] - median; // note this is the median from curr_channel, not prev_channel
+              // set num_store_ch
+              num_store_ch[bin] = ROI_ch;
+            }
+            else if(num_store_ch>0 and peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
+            {
+              // fill upper channel ROI
+              ROI_array[update_channel].at(bin) = prev_charges[bin] - median;
+            }
 
-            // // iterate num_store_ch
-            // if(num_store_ch[bin]>1)
-            //   num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
-            // else if(num_store_ch[bin]==1)
-            //   num_store_ch[bin] -= -1; // -1 means end of upper ROI
-            // else if(num_store_ch[bin]==-1)
-            //   num_store_ch[bin] -= 0; // 0 means ready to find next end of track 
+            // iterate num_store_ch
+            if(num_store_ch[bin]>1)
+              num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
+            else if(num_store_ch[bin]==1)
+              num_store_ch[bin] -= -1; // -1 means end of upper ROI
+            else if(num_store_ch[bin]==-1)
+              num_store_ch[bin] -= 0; // 0 means ready to find next end of track 
 
             // update peak_bin_flag
-            peak_bin_flag[0][bin] = peak_bin_flag[1][bin];
-            peak_bin_flag[1][bin] = 0;
+            peak_bin_flag[1][bin] = peak_bin_flag[0][bin];
+            peak_bin_flag[0][bin] = 0;
 
           }
         }
