@@ -101,7 +101,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     int num_store_ch[charges_size] = {}; // number of upper channels to store ROI info per bin (initialized to 0)
     int peak_bin_flag[2][charges_size]; // peak_bin_flag[0][i] is curr ch peak flag in ith bin, peak_bin_flag[1] is prev ch
 
-    // Store ROI in 
+    // Store ROI in ROI_array
     for (auto trace : *traces.get())
     {
         int channel = trace->channel();
@@ -139,8 +139,6 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           }
         }
 
-        // Write newcharge to ROI_array
-        ROI_array[ch_ind] = newcharge;
 
         // Channel ROI
         if(ch_ind>0)
@@ -169,23 +167,23 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             if(num_store_ch[bin]==0 and peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
             {
               // fill upper channel ROI
-              ROI_array[ch_ind].at(bin) = charges[bin] - median;
+              newcharge.at(bin) = charges[bin] - median;
               // set num_store_ch
               num_store_ch[bin] = ROI_ch;
             }
-            else if(num_store_ch>0 and peak_bin_flag[0][bin]==0 and peak_bin_flag[1][bin]==1)
+            else if(num_store_ch[bin]>0)
             {
               // fill upper channel ROI
-              ROI_array[ch_ind].at(bin) = charges[bin] - median;
+              newcharge.at(bin) = charges[bin] - median;
             }
 
             // iterate num_store_ch
             if(num_store_ch[bin]>1)
               num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
             else if(num_store_ch[bin]==1)
-              num_store_ch[bin] -= -1; // -1 means end of upper ROI
+              num_store_ch[bin] = -1; // -1 means end of upper ROI
             else if(num_store_ch[bin]==-1)
-              num_store_ch[bin] -= 0; // 0 means ready to find next end of track 
+              num_store_ch[bin] = 0; // 0 means ready to find next end of track 
 
             // update peak_bin_flag
             peak_bin_flag[1][bin] = peak_bin_flag[0][bin];
@@ -225,6 +223,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         //////////////////////////////////////
         //////////TO comment if is uncommented the part over this
 
+        // Write newcharge to ROI_array
+        ROI_array[ch_ind] = newcharge;
         ch_ind = ch_ind+1; // iterate channel index
     }
 
