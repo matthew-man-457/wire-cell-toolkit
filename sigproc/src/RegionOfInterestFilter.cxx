@@ -139,7 +139,6 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         	    if(newbin>-1 and newbin<(int)charges.size())
               {
         		    newcharge.at(newbin) = charges[newbin]- median;
-                peak_bin_flag[0][newbin] = 1; // TODO: delete
               }
           	}
           }
@@ -153,7 +152,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     // Channel ROI
     for (int ch_ind = 1; ch_ind < num_channels; ch_ind++)
     {
-      for(int bin=0; bin<(int)newcharge.size(); bin++)
+      for(int bin=0; bin<(int)ROI_array[ch_ind].size(); bin++)
       {
         // Lower channel ROI
         // peak in channel and zero in channel-1 (start of track)
@@ -166,7 +165,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             if(update_channel>-1)
             {
               // fill ROI
-              ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin)
+              ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
             } 
           }
         }
@@ -182,7 +181,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             if(update_channel<num_channels)
             {
               // fill ROI
-              ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin)
+              ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
             } 
           }
         }
