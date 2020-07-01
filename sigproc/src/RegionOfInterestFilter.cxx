@@ -113,7 +113,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     for (auto trace : *traces.get())
     {
         int channel = trace->channel();
-        int tbin = trace->tbin();
+        //int tbin = trace->tbin();
         auto const& charges = trace->charge();
 
         ITrace::ChargeSequence newcharge(charges.size(), 0.0);
@@ -174,11 +174,11 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         if(num_store_ch[bin]==0 and isZero(ROI_array[ch_ind].at(bin)) and ispeak(ROI_array[ch_ind-1].at(bin)))
         {
           // fill upper channel ROI
-          ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
+          ROI_array[ch_ind].at(bin) = old_array[ch_ind].at(bin);
           num_store_ch[bin] = ROI_ch;
         }
         else if (num_store_ch[bin]>0)
-          ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
+          ROI_array[ch_ind].at(bin) = old_array[ch_ind].at(bin);
 
         // iterate num_store_ch
         if(num_store_ch[bin]>1)
