@@ -94,18 +94,19 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         log->debug("RegionOfInterestFilter: tag {}", ttag);
 
     int num_channels = traces->size(); // number of channels
+    int num_bins = traces->at(0)-charge().size(); // number of time bins
     ITrace::ChargeSequence old_array[num_channels]; // charges of traces, stored as array with sequential channels
     ITrace::ChargeSequence ROI_array[num_channels]; // ROI charges of traces, stored as array
+    int peak_flag[num_channels][num_bins];
     
-    int lowest_ch = 0;
+    int lowest_ch = -1;
 
     // Get lowest channel number
     for (auto trace : *traces.get())
     {
       int channel = trace->channel();
-      if (channel<lowest_ch or lowest_ch==0) lowest_ch = channel;
+      if (channel<lowest_ch and lowest_ch>-1) lowest_ch = channel;
     }
-    cout << lowest_ch << "\n"; 
 
     // Time ROI
     for (auto trace : *traces.get())
@@ -135,15 +136,19 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           {
 
             //log->debug("RegionOfInterestFilter: peak in the bin {} = {}, median {}, Cvalue {}, ispeak {}", bin, charges[bin], median, central_value, ispeak(charges[bin]) );
-          	for(int delta = -ROI; delta < ROI; ++delta)
-          	{
-        	    int newbin = bin+delta;
-        	    if(newbin>-1 and newbin<(int)charges.size())
+            for(int delta = -ROI; delta < ROI; ++delta)
+            {
+              int newbin = bin+delta;
+              if(newbin>-1 and newbin<(int)charges.size())
               {
-        		    newcharge.at(newbin) = charges[newbin]- median;
+                newcharge.at(newbin) = charges[newbin]- median;
+                peak_flag[channel-lowest_ch][newbin] = 1;
               }
-          	}
+            }
           }
+
+          if (peak_flag[channel-lowest_ch][newbin] != 1) peak_flag[channel-lowest_ch][newbin] == 0;
+          
         }
 
         // Write to charge arrays
