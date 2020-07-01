@@ -115,6 +115,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         auto const& charges = trace->charge();
 
         ITrace::ChargeSequence newcharge(charges.size(), 0.0);
+        ITrace::ChargeSequence oldcharge(charges.size(), 0.0);
 
         auto chargessort = charges;
 
@@ -127,6 +128,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         for (int bin = 0; bin < (int)charges.size(); ++bin)
         {
           float central_value = charges[bin]- median;
+          oldcharge.at(bin) = central_value;
           // log->debug("RegionOfInterestFilter: carica nel bin {} = {}, median {}, Cvalue {}", bin, charges[bin], median, central_value );  
 
           if(central_value<-PEAK or central_value>PEAK)
@@ -146,7 +148,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         // Write to charge arrays
         ROI_array[channel-lowest_ch] = newcharge;
-        old_array[channel-lowest_ch] = charges;
+        old_array[channel-lowest_ch] = oldcharge;
     }
 
     // Channel ROI
