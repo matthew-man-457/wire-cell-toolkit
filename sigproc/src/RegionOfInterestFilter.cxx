@@ -94,7 +94,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         log->debug("RegionOfInterestFilter: tag {}", ttag);
 
     int num_channels = traces->size(); // number of channels
-    int num_bins = traces->at(0)-charge().size(); // number of time bins
+    int num_bins = traces->at(0)->charge().size(); // number of time bins
     ITrace::ChargeSequence old_array[num_channels]; // charges of traces, stored as array with sequential channels
     ITrace::ChargeSequence ROI_array[num_channels]; // ROI charges of traces, stored as array
     int peak_flag[num_channels][num_bins];
@@ -147,8 +147,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             }
           }
 
-          if (peak_flag[channel-lowest_ch][newbin] != 1) peak_flag[channel-lowest_ch][newbin] == 0;
-          
+          if (peak_flag[channel-lowest_ch][bin] != 1) peak_flag[channel-lowest_ch][bin] == 0;
+
         }
 
         // Write to charge arrays
