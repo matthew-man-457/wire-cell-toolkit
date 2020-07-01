@@ -95,10 +95,9 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
     int num_channels = traces->size(); // number of channels
     int num_bins = traces->at(0)->charge().size(); // number of time bins
+    int num_store_ch[num_bins] = {}; // number of upper ch roi to store per bin
     ITrace::ChargeSequence old_array[num_channels]; // charges of traces, stored as array with sequential channels
     ITrace::ChargeSequence ROI_array[num_channels]; // ROI charges of traces, stored as array
-    int peak_flag[num_channels][num_bins];
-    cout << num_channels << num_bins << "\n";
     
     int lowest_ch = -1;
 
@@ -142,15 +141,9 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
             {
               int newbin = bin+delta;
               if(newbin>-1 and newbin<(int)charges.size())
-              {
                 newcharge.at(newbin) = charges[newbin]- median;
-                peak_flag[channel-lowest_ch][newbin] = 1;
-              }
             }
           }
-
-          if (peak_flag[channel-lowest_ch][bin] != 1) peak_flag[channel-lowest_ch][bin] == 0;
-
         }
 
         // Write to charge arrays
@@ -165,35 +158,35 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
       {
         // Lower channel ROI
         // peak in channel and zero in channel-1 (start of track)
-        if(peak_flag[ch_ind][bin]==1 and peak_flag[ch_ind-1][bin]==0)
+        if(ispeak(ROI_array[ch_ind].at(bin)) and isZero(ROI_array[ch_ind-1].at(bin)))
         {
           // fill lower channel ROI
           for(int j=-ROI_ch; j<0; j++)
           {
             int update_channel = ch_ind+j;
             if(update_channel>-1)
-            {
-              // fill ROI
               ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
-            } 
           }
         }
 
         // Upper channel ROI
         // zero in channel and peak in channel-1 (end of track)
-        if(peak_flag[ch_ind][bin]==0 and peak_flag[ch_ind-1][bin]==1)
+        if(num_store_ch[bin]==0 and isZero(ROI_array[ch_ind].at(bin)) and ispeak(ROI_array[ch_ind-1].at(bin)))
         {
-          // fill lower channel ROI
-          for(int j=0; j<ROI_ch; j++)
-          {
-            int update_channel = ch_ind+j;
-            if(update_channel<num_channels)
-            {
-              // fill ROI
-              ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
-            } 
-          }
+          // fill upper channel ROI
+          ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
+          num_store_ch[bin] = ROI_ch;
         }
+        else if (num_store_ch[bin]>0)
+          ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
+
+        // iterate num_store_ch
+        if(num_store_ch[bin]>1)
+          num_store_ch[bin] -= 1; // >0 means store that many more channels in ROI
+        else if(num_store_ch[bin]==1)
+          num_store_ch[bin] = -1; // -1 means end of upper ROI
+        else if(num_store_ch[bin]==-1)
+          num_store_ch[bin] = 0; // 0 means ready to find next end of track
       }
     }
 
