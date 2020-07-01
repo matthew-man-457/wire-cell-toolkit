@@ -98,6 +98,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     ITrace::ChargeSequence old_array[num_channels]; // charges of traces, stored as array with sequential channels
     ITrace::ChargeSequence ROI_array[num_channels]; // ROI charges of traces, stored as array
     int peak_flag[num_channels][num_bins];
+    cout << num_channels << num_bins << "\n";
     
     int lowest_ch = -1;
 
@@ -107,6 +108,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
       int channel = trace->channel();
       if (channel<lowest_ch and lowest_ch>-1) lowest_ch = channel;
     }
+    cout << lowest_ch << "\n";
 
     // Time ROI
     for (auto trace : *traces.get())
