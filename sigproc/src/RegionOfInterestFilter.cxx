@@ -163,7 +163,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
       {
         // Lower channel ROI
         // peak in channel and zero in channel-1 (start of track)
-        if(ispeak(ROI_array[ch_ind].at(bin)) and isZero(ROI_array[ch_ind-1].at(bin)))
+        if(peak_flag[ch_ind][bin]==1 and peak_flag[ch_ind-1][bin]==0)
         {
           // fill lower channel ROI
           for(int j=-ROI_ch; j<0; j++)
@@ -179,7 +179,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
 
         // Upper channel ROI
         // zero in channel and peak in channel-1 (end of track)
-        if(isZero(ROI_array[ch_ind].at(bin)) and ispeak(ROI_array[ch_ind-1].at(bin)))
+        if(peak_flag[ch_ind][bin]==0 and peak_flag[ch_ind-1][bin]==1)
         {
           // fill lower channel ROI
           for(int j=0; j<ROI_ch; j++)
