@@ -105,9 +105,9 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     for (auto trace : *traces.get())
     {
       int channel = trace->channel();
-      if (channel<lowest_ch and lowest_ch>-1) lowest_ch = channel;
+      if (channel<lowest_ch or lowest_ch==-1) lowest_ch = channel;
     }
-    cout << lowest_ch << "\n";
+    // cout << "lowest_ch: " << lowest_ch << "\n";
 
     // Time ROI
     for (auto trace : *traces.get())
@@ -150,11 +150,14 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         ROI_array[channel-lowest_ch] = newcharge;
         old_array[channel-lowest_ch] = oldcharge;
     }
-
+    // cout << "Time ROI complete \n";
+    
     // Channel ROI
     for (int ch_ind = 1; ch_ind < num_channels; ch_ind++)
     {
-      for(int bin=0; bin<(int)ROI_array[ch_ind].size(); bin++)
+      int max_bin = ROI_array[ch_ind].size(); 
+      if((int)ROI_array[ch_ind].size() > (int)ROI_array[ch_ind-1].size()) max_bin = ROI_array[ch_ind-1].size();
+      for(int bin=0; bin<max_bin; bin++)
       {
         // Lower channel ROI
         // peak in channel and zero in channel-1 (start of track)
@@ -189,7 +192,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           num_store_ch[bin] = 0; // 0 means ready to find next end of track
       }
     }
-
+    
     // Write ROI_array to newtraces
     for (auto trace : *traces.get())
     {
