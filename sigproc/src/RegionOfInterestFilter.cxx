@@ -94,32 +94,33 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
         log->debug("RegionOfInterestFilter: tag {}", ttag);
 
     int num_channels = traces->size(); // number of channels
-    int num_bins = traces->at(0)->charge().size(); // number of time bins
-    int num_store_ch[num_bins] = {}; // number of upper ch roi to store per bin
     ITrace::ChargeSequence old_array[num_channels]; // charges of traces, stored as array with sequential channels
     ITrace::ChargeSequence ROI_array[num_channels]; // ROI charges of traces, stored as array
     
     int lowest_ch = -1;
+    int num_bins = traces->at(0)->charge().size();
 
-    // Get lowest channel number
+    // Get lowest channel number and lowest number of bins
     for (auto trace : *traces.get())
     {
       int channel = trace->channel();
       if (channel<lowest_ch or lowest_ch==-1) lowest_ch = channel;
+      if ((int)trace->charge().size() < num_bins) num_bins = trace->charge().size();
     }
     // cout << "lowest_ch: " << lowest_ch << "\n";
+    int num_store_ch[num_bins] = {}; // number of upper ch roi to store per bin
 
     // Time ROI
     for (auto trace : *traces.get())
     {
         int channel = trace->channel();
-        //int tbin = trace->tbin();
+        // int tbin = trace->tbin();
         auto const& charges = trace->charge();
 
         ITrace::ChargeSequence newcharge(charges.size(), 0.0);
         ITrace::ChargeSequence oldcharge(charges.size(), 0.0);
 
-        auto chargessort = charges;
+	auto chargessort = charges;
 
         std::nth_element(chargessort.begin(), chargessort.begin() + chargessort.size()/2, chargessort.end());
         float median = chargessort[chargessort.size()/2];
@@ -155,9 +156,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
     // Channel ROI
     for (int ch_ind = 1; ch_ind < num_channels; ch_ind++)
     {
-      int max_bin = ROI_array[ch_ind].size(); 
-      if((int)ROI_array[ch_ind].size() > (int)ROI_array[ch_ind-1].size()) max_bin = ROI_array[ch_ind-1].size();
-      for(int bin=0; bin<max_bin; bin++)
+      for(int bin=0; bin<num_bins; bin++)
       {
         // Lower channel ROI
         // peak in channel and zero in channel-1 (start of track)
@@ -168,7 +167,7 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           {
             int update_channel = ch_ind+j;
             if(update_channel>-1)
-              ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);
+              {ROI_array[update_channel].at(bin) = old_array[update_channel].at(bin);}
           }
         }
 
@@ -192,7 +191,8 @@ bool RegionOfInterestFilter::operator()(const input_pointer& inframe, output_poi
           num_store_ch[bin] = 0; // 0 means ready to find next end of track
       }
     }
-    
+    // cout << "Channel ROI complete \n";
+
     // Write ROI_array to newtraces
     for (auto trace : *traces.get())
     {
