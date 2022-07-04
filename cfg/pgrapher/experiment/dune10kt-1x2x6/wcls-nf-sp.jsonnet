@@ -69,7 +69,7 @@ local wcls_input = {
 };
 
 // Collect all the wc/ls output converters for use below.  Note the
-// "name" MUST match what is used in theh "outputers" parameter in the
+// "name" MUST match what is used in the "outputers" parameter in the
 // FHiCL that loads this file.
 local mega_anode = {
   type: 'MegaAnodePlane',
@@ -130,7 +130,7 @@ local chndb = [{
 local nf_maker = import 'pgrapher/experiment/dune10kt-1x2x6/nf.jsonnet';
 local nf_pipes = [nf_maker(params, tools.anodes[n], chndb[n], n, name='nf%d' % n) for n in std.range(0, std.length(tools.anodes) - 1)];
 
-local sp = sp_maker(params, tools, { sparse: sigoutform == 'sparse' });
+local sp = sp_maker(params, tools, { sparse: sigoutform == false });
 local sp_pipes = [sp.make_sigproc(a) for a in tools.anodes];
 
 local chsel_pipes = [
@@ -153,13 +153,13 @@ local sinks = magnify(tools, magoutput);
 local nfsp_pipes = [
   g.pipeline([
                chsel_pipes[n],
-               // sinks.orig_pipe[n],
+               sinks.orig_pipe[n],
 
                // nf_pipes[n],
                // sinks.raw_pipe[n],
 
                sp_pipes[n],
-               // sinks.decon_pipe[n],
+               sinks.decon_pipe[n],
                // sinks.threshold_pipe[n],
                // sinks.debug_pipe[n], // use_roi_debug_mode=true in sp.jsonnet
              ],
