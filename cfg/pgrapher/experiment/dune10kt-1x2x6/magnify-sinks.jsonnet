@@ -25,6 +25,21 @@ function(tools, outputfile) {
     for n in std.range(0, nanodes - 1)
   ],
 
+  local magroi = [
+    g.pnode({
+      type: 'MagnifySink',
+      name: 'magroi%d' % n,
+      data: {
+        output_filename: outputfile,
+        root_file_mode: 'UPDATE',
+        frames: ['roi%d' % n],
+        trace_has_tag: true,   // traces from source have NO tag
+        anode: wc.tn(tools.anodes[n]),
+      },
+    }, nin=1, nout=1)
+    for n in std.range(0, nanodes - 1)
+  ],
+
   local magraw = [
     g.pnode({
       type: 'MagnifySink',
@@ -94,6 +109,7 @@ function(tools, outputfile) {
 
   return: {
     orig_pipe: [g.pipeline([magorig[n]], name='magorigpipe%d' % n) for n in std.range(0, nanodes - 1)],
+    roi_pipe: [g.pipeline([magroi[n]], name='magroigpipe%d' % n) for n in std.range(0, nanodes - 1)],
     raw_pipe: [g.pipeline([magraw[n]], name='magrawpipe%d' % n) for n in std.range(0, nanodes - 1)],
     decon_pipe: [g.pipeline([magdecon[n]], name='magdeconpipe%d' % n) for n in std.range(0, nanodes - 1)],
     debug_pipe: [g.pipeline([magdebug[n]], name='magdebugpipe%d' % n) for n in std.range(0, nanodes - 1)],

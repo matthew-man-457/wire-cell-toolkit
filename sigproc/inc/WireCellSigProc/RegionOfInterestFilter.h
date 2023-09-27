@@ -15,7 +15,6 @@
 #include "WireCellUtil/Waveform.h"
 #include "WireCellUtil/Logging.h"
 
-
 #include <vector>
 #include <map>
 #include <string>
@@ -34,7 +33,7 @@ namespace WireCell {
 	    typedef std::vector< std::vector<int> > grouped_channels_t;
 
 	    /// Create an RegionOfInterestFilter.
-	    RegionOfInterestFilter(const std::string& roi_tag = "roi", const std::string& old_tag = "raw");
+	    RegionOfInterestFilter(const std::string& roi_tag = "roi", const std::string& old_tag = "raw", float peak=20, int ROI_t=120, int ROI_ch=10);
 	    virtual ~RegionOfInterestFilter();
 
 	    /// IFrameFilter interface.
@@ -60,7 +59,12 @@ namespace WireCell {
 		std::string m_roi_tag;
 		std::string m_old_tag;
 		std::string m_frame_tag;
-        Log::logptr_t log;
+
+                float m_peak;
+                int m_ROI_t;
+                int m_ROI_ch;
+
+                Log::logptr_t log;
 		Waveform::ChannelMaskMap m_cmm; 
 
 		// Need to go from WCT channel ident to {OSP channel, wire and plane}
