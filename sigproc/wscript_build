@@ -1,1 +1,1 @@
-bld.smplpkg('WireCellSigProc', use='WireCellAux')
+bld.smplpkg('WireCellSigProc', use='WireCellAux ROOTSYS')
